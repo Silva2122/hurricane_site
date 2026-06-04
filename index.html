@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Тренажер по менеджменту</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="trainer" aria-labelledby="question-title">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">Менеджмент</p>
+            <h1>Тренажер экзаменационных вопросов</h1>
+          </div>
+          <div class="score" aria-live="polite">
+            <span id="answered-count">0</span>/<span id="total-count">0</span>
+          </div>
+        </div>
+
+        <div class="mode-switch" role="group" aria-label="Режим тренажера">
+          <button id="practice-mode-button" class="mode-button active" type="button">Обычный</button>
+          <button id="marathon-mode-button" class="mode-button" type="button">Марафон</button>
+        </div>
+
+        <div class="question-meta">
+          <span id="question-counter">Вопрос 1</span>
+          <span id="question-mode">Один правильный ответ</span>
+        </div>
+
+        <figure id="question-image-wrap" class="question-image-wrap" hidden>
+          <img id="question-image" alt="" />
+        </figure>
+
+        <h2 id="question-title"></h2>
+        <div id="options" class="options"></div>
+
+        <div id="answer-panel" class="answer-panel" hidden>
+          <p id="answer-result" class="answer-result"></p>
+          <p id="answer-text"></p>
+        </div>
+
+        <div class="actions">
+          <button id="check-button" class="primary" type="button" hidden>Проверить</button>
+          <button id="show-answer-button" class="primary" type="button" hidden>Показать ответ</button>
+          <button id="next-button" class="primary" type="button" hidden>К следующему вопросу</button>
+          <button id="restart-button" class="primary" type="button" hidden>Начать заново</button>
+          <button id="reset-button" class="secondary" type="button">Сбросить</button>
+        </div>
+      </section>
+
+      <aside class="navigator" aria-label="Навигация по вопросам">
+        <div class="navigator-head">
+          <h2>Вопросы</h2>
+          <button id="shuffle-button" class="icon-button" type="button" title="Перемешать вопросы" aria-label="Перемешать вопросы">
+            ↻
+          </button>
+        </div>
+        <div id="question-grid" class="question-grid"></div>
+      </aside>
+    </main>
+
+    <section class="music-player" aria-label="Фоновая музыка">
+      <button id="music-toggle" class="music-toggle" type="button" aria-expanded="false" aria-controls="music-panel" title="Фоновая музыка">
+        ♪
+      </button>
+      <div id="music-panel" class="music-panel" hidden>
+        <div class="music-panel-head">
+          <h2>Фоновый трек</h2>
+          <button id="music-stop" class="music-stop" type="button">Пауза</button>
+        </div>
+        <div class="music-track-list">
+          <button class="music-track" type="button" data-audio-src="./angelik_-_april_(SkySound.cc).mp3">
+            <span>angelik_-_april_(SkySound.cc).mp3</span>
+          </button>
+          <button class="music-track" type="button" data-audio-src="./angelik_-_cokewalk_(SkySound.cc).mp3">
+            <span>angelik_-_cokewalk_(SkySound.cc).mp3</span>
+          </button>
+          <button class="music-track" type="button" data-audio-src="./9mice_EGOR_KRID_tyomnyj_princ_madk1d_-_Jealous_(SkySound.cc).mp3">
+            <span>9mice_EGOR_KRID_tyomnyj_princ_madk1d_-_Jealous_(SkySound.cc).mp3</span>
+          </button>
+        </div>
+        <p id="music-status" class="music-status">Выбери трек, чтобы включить фон.</p>
+        <label class="volume-control" for="music-volume">
+          <span>Громкость</span>
+          <input id="music-volume" type="range" min="0" max="100" value="60" />
+          <strong id="music-volume-value">60%</strong>
+        </label>
+        <audio id="music-audio" class="music-audio" preload="none" loop></audio>
+      </div>
+    </section>
+
+    <script src="./data/questions.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
