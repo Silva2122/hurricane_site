@@ -1,6 +1,26 @@
 (function () {
   const payload = window.MANAGEMENT_QUESTIONS || { metadata: {}, questions: [] };
   const originalQuestions = payload.questions || [];
+  const bossFightSize = 10;
+  const correctPhrases = [
+    "Менеджмент тебя боится.",
+    "Минцберг одобряет.",
+    "Еще один шаг к автомату.",
+    "Зачетка довольно улыбается.",
+    "Так держать, управленец.",
+  ];
+  const wrongPhrases = [
+    "Ничего, сейчас переуправим ситуацию.",
+    "Планирование пошло не по плану.",
+    "Контроль качества проснулся.",
+    "Бедолага из интернета снова под подозрением.",
+    "Еще круг, и будет красиво.",
+  ];
+  const bossWinPhrases = [
+    "Босс повержен. Можно дышать.",
+    "Преподавательский щит пробит.",
+    "Десять из десяти. Это уже стиль.",
+  ];
 
   let questions = [...originalQuestions];
   let currentIndex = 0;
@@ -8,6 +28,7 @@
   let revealed = false;
   let mode = "practice";
   let marathonFailed = false;
+  let bossComplete = false;
   let results = new Map();
   let activeQuestionId = "";
   let sequenceOrder = [];
@@ -34,6 +55,7 @@
     answerText: document.getElementById("answer-text"),
     practiceModeButton: document.getElementById("practice-mode-button"),
     marathonModeButton: document.getElementById("marathon-mode-button"),
+    bossModeButton: document.getElementById("boss-mode-button"),
     checkButton: document.getElementById("check-button"),
     showAnswerButton: document.getElementById("show-answer-button"),
     nextButton: document.getElementById("next-button"),
@@ -120,6 +142,7 @@
 
     nodes.practiceModeButton.classList.toggle("active", mode === "practice");
     nodes.marathonModeButton.classList.toggle("active", mode === "marathon");
+    nodes.bossModeButton.classList.toggle("active", mode === "boss");
     nodes.answeredCount.textContent = answered.toString();
     nodes.totalCount.textContent = questions.length.toString();
     nodes.questionCounter.textContent = `Вопрос ${currentIndex + 1} из ${questions.length} · ${question.displayNumber}`;
@@ -155,6 +178,9 @@
     const answerMode = kindLabels[question.kind] || "вопрос";
     if (mode === "marathon") {
       return `Марафон · ${answerMode}`;
+    }
+    if (mode === "boss") {
+      return `Босс-файт · ${answerMode}`;
     }
     if (!isChoice(question)) {
       return question.kind === "sequence" ? "Задание на последовательность" : "Задание на соответствие";
@@ -551,17 +577,24 @@
     }
 
     if (isCurrentCorrect(question)) {
-      nodes.answerResult.textContent = "Верно";
-      nodes.answerText.textContent = isChoice(question)
-        ? `Правильный ответ: ${question.answerText}`
-        : `Ответ: ${question.answerText}`;
+      nodes.answerResult.textContent = bossComplete ? "Босс повержен" : "Верно";
+      nodes.answerText.textContent = buildAnswerText(
+        question,
+        result && result.phrase ? result.phrase : getRandomPhrase(correctPhrases)
+      );
       return;
     }
 
-    nodes.answerResult.textContent = mode === "marathon" ? "Ошибка. Марафон начинается заново" : "Неверно";
-    nodes.answerText.textContent = isChoice(question)
-      ? `Правильный ответ: ${question.answerText}`
-      : `Ответ: ${question.answerText}`;
+    nodes.answerResult.textContent =
+      mode === "marathon"
+        ? "Ошибка. Марафон начинается заново"
+        : mode === "boss"
+          ? "Босс-файт провален"
+          : "Неверно";
+    nodes.answerText.textContent = buildAnswerText(
+      question,
+      result && result.phrase ? result.phrase : getRandomPhrase(wrongPhrases)
+    );
   }
 
   function renderActions(question) {
@@ -570,9 +603,10 @@
     nodes.checkButton.hidden = revealed || (!structured && !isMulti(question));
     nodes.checkButton.disabled = isCheckDisabled(question, hasSelection);
     nodes.showAnswerButton.hidden = !structured || revealed;
-    nodes.nextButton.hidden = !revealed || marathonFailed;
-    nodes.restartButton.hidden = !marathonFailed;
-    nodes.shuffleButton.disabled = mode === "marathon";
+    nodes.nextButton.hidden = !revealed || marathonFailed || bossComplete;
+    nodes.restartButton.hidden = !(marathonFailed || bossComplete);
+    nodes.restartButton.textContent = bossComplete ? "Еще один босс-файт" : "Начать заново";
+    nodes.shuffleButton.disabled = mode !== "practice";
   }
 
   function isCheckDisabled(question, hasSelection) {
@@ -600,12 +634,12 @@
       button.type = "button";
       button.textContent = question.shortLabel || String(question.number);
       button.title = question.displayNumber || `Вопрос ${question.number}`;
-      button.disabled = mode === "marathon";
+      button.disabled = mode !== "practice";
 
       if (index === currentIndex) {
         button.classList.add("active");
       }
-      if (mode === "marathon") {
+      if (mode !== "practice") {
         button.classList.add("locked");
       }
 
@@ -628,11 +662,16 @@
     const question = currentQuestion();
     const correct = isCurrentCorrect(question);
     revealed = true;
-    marathonFailed = mode === "marathon" && !correct;
+    marathonFailed = (mode === "marathon" || mode === "boss") && !correct;
+    bossComplete = mode === "boss" && correct && results.size + 1 >= questions.length;
     results.set(resultKey(question), {
       selected: getCurrentAnswerSnapshot(question),
       correct,
+      phrase: getResultPhrase(correct),
     });
+    if (correct) {
+      launchConfetti();
+    }
     render();
   }
 
@@ -642,8 +681,9 @@
     results.set(resultKey(question), {
       selected: getCurrentAnswerSnapshot(question),
       correct: false,
+      phrase: getResultPhrase(false),
     });
-    marathonFailed = mode === "marathon";
+    marathonFailed = mode === "marathon" || mode === "boss";
     render();
   }
 
@@ -674,7 +714,7 @@
 
   function goNext() {
     if (marathonFailed) {
-      restartMarathon();
+      restartCurrentRun();
       return;
     }
     currentIndex = (currentIndex + 1) % questions.length;
@@ -687,9 +727,14 @@
       restartMarathon();
       return;
     }
+    if (mode === "boss") {
+      restartBossFight();
+      return;
+    }
 
     resetInteraction();
     marathonFailed = false;
+    bossComplete = false;
     results = new Map();
     currentIndex = 0;
     render();
@@ -701,6 +746,10 @@
       restartMarathon();
       return;
     }
+    if (mode === "boss") {
+      restartBossFight();
+      return;
+    }
 
     questions = [...originalQuestions];
     reset();
@@ -710,19 +759,39 @@
     questions = shuffledQuestions(originalQuestions);
     resetInteraction();
     marathonFailed = false;
+    bossComplete = false;
     results = new Map();
     currentIndex = 0;
     render();
   }
 
+  function restartBossFight() {
+    questions = shuffledQuestions(originalQuestions).slice(0, bossFightSize);
+    resetInteraction();
+    marathonFailed = false;
+    bossComplete = false;
+    results = new Map();
+    currentIndex = 0;
+    render();
+  }
+
+  function restartCurrentRun() {
+    if (mode === "boss") {
+      restartBossFight();
+      return;
+    }
+    restartMarathon();
+  }
+
   function shuffle() {
-    if (mode === "marathon") {
+    if (mode !== "practice") {
       return;
     }
     questions = shuffledQuestions(questions);
     currentIndex = 0;
     resetInteraction();
     marathonFailed = false;
+    bossComplete = false;
     results = new Map();
     render();
   }
@@ -732,6 +801,40 @@
       .map((question) => ({ question, sort: Math.random() }))
       .sort((left, right) => left.sort - right.sort)
       .map((item) => item.question);
+  }
+
+  function buildAnswerText(question, phrase) {
+    const answer = isChoice(question) ? `Правильный ответ: ${question.answerText}` : `Ответ: ${question.answerText}`;
+    return `${phrase} ${answer}`;
+  }
+
+  function getResultPhrase(correct) {
+    if (correct && mode === "boss" && results.size + 1 >= questions.length) {
+      return getRandomPhrase(bossWinPhrases);
+    }
+    return getRandomPhrase(correct ? correctPhrases : wrongPhrases);
+  }
+
+  function getRandomPhrase(phrases) {
+    return phrases[Math.floor(Math.random() * phrases.length)];
+  }
+
+  function launchConfetti() {
+    const colors = ["#207a3f", "#73c987", "#d8c9a6", "#1f2937", "#df5b67"];
+    const count = window.matchMedia("(max-width: 620px)").matches ? 28 : 44;
+
+    for (let index = 0; index < count; index += 1) {
+      const piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.style.left = `${45 + Math.random() * 10}%`;
+      piece.style.background = colors[index % colors.length];
+      piece.style.setProperty("--confetti-x", `${(Math.random() - 0.5) * 520}px`);
+      piece.style.setProperty("--confetti-y", `${220 + Math.random() * 260}px`);
+      piece.style.setProperty("--confetti-rotate", `${Math.random() * 720 - 360}deg`);
+      piece.style.animationDelay = `${Math.random() * 90}ms`;
+      document.body.append(piece);
+      window.setTimeout(() => piece.remove(), 1100);
+    }
   }
 
   function toggleMusicPanel() {
@@ -1007,11 +1110,12 @@
   nodes.checkButton.addEventListener("click", revealAnswer);
   nodes.showAnswerButton.addEventListener("click", showStructuredAnswer);
   nodes.nextButton.addEventListener("click", goNext);
-  nodes.restartButton.addEventListener("click", restartMarathon);
+  nodes.restartButton.addEventListener("click", restartCurrentRun);
   nodes.resetButton.addEventListener("click", reset);
   nodes.shuffleButton.addEventListener("click", shuffle);
   nodes.practiceModeButton.addEventListener("click", () => setMode("practice"));
   nodes.marathonModeButton.addEventListener("click", () => setMode("marathon"));
+  nodes.bossModeButton.addEventListener("click", () => setMode("boss"));
   nodes.musicToggle.addEventListener("click", toggleMusicPanel);
   nodes.musicStop.addEventListener("click", stopMusic);
   nodes.musicVolume.addEventListener("input", updateMusicVolume);
