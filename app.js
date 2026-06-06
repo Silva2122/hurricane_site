@@ -99,6 +99,7 @@
   let titleClicks = 0;
   let secretMode = loadBoolean("management-secret-mode");
   let errorSoundEnabled = !loadBoolean("management-error-sound-muted");
+  let errorMemeEnabled = !loadBoolean("management-error-meme-muted");
   let unlockedAchievements = loadUnlockedAchievements();
 
   const nodes = {
@@ -138,6 +139,9 @@
     musicAudio: document.getElementById("music-audio"),
     errorAudio: document.getElementById("error-audio"),
     errorSoundToggle: document.getElementById("error-sound-toggle"),
+    errorMemeToggle: document.getElementById("error-meme-toggle"),
+    wrongMemeModal: document.getElementById("wrong-meme-modal"),
+    wrongMemeClose: document.getElementById("wrong-meme-close"),
     musicTracks: [...document.querySelectorAll(".music-track")],
     gameToggle: document.getElementById("game-toggle"),
     gameModal: document.getElementById("game-modal"),
@@ -766,6 +770,7 @@
     } else {
       correctStreak = 0;
       playErrorSound();
+      showWrongMeme();
     }
     render();
   }
@@ -1146,8 +1151,14 @@
     saveBoolean("management-error-sound-muted", !errorSoundEnabled);
   }
 
+  function updateErrorMemeToggle() {
+    errorMemeEnabled = nodes.errorMemeToggle.checked;
+    saveBoolean("management-error-meme-muted", !errorMemeEnabled);
+  }
+
   function syncErrorSoundToggle() {
     nodes.errorSoundToggle.checked = errorSoundEnabled;
+    nodes.errorMemeToggle.checked = errorMemeEnabled;
   }
 
   async function playErrorSound() {
@@ -1161,6 +1172,18 @@
     } catch (error) {
       // Browsers may block audio until a user gesture; answering is normally enough.
     }
+  }
+
+  function showWrongMeme() {
+    if (!errorMemeEnabled) {
+      return;
+    }
+
+    nodes.wrongMemeModal.hidden = false;
+  }
+
+  function closeWrongMeme() {
+    nodes.wrongMemeModal.hidden = true;
   }
 
   async function playMusic(track) {
@@ -1344,6 +1367,10 @@
         closeStress();
         return;
       }
+      if (!nodes.wrongMemeModal.hidden) {
+        closeWrongMeme();
+        return;
+      }
     }
 
     if (nodes.gameModal.hidden) {
@@ -1447,8 +1474,15 @@
   nodes.musicStop.addEventListener("click", stopMusic);
   nodes.musicVolume.addEventListener("input", updateMusicVolume);
   nodes.errorSoundToggle.addEventListener("change", updateErrorSoundToggle);
+  nodes.errorMemeToggle.addEventListener("change", updateErrorMemeToggle);
   nodes.musicTracks.forEach((track) => {
     track.addEventListener("click", () => playMusic(track));
+  });
+  nodes.wrongMemeClose.addEventListener("click", closeWrongMeme);
+  nodes.wrongMemeModal.addEventListener("click", (event) => {
+    if (event.target === nodes.wrongMemeModal) {
+      closeWrongMeme();
+    }
   });
   nodes.gameToggle.addEventListener("click", openGame);
   nodes.gameClose.addEventListener("click", closeGame);

@@ -709,7 +709,8 @@ body.secret-mode #trainer-title {
 
 .game-modal,
 .achievements-modal,
-.stress-modal {
+.stress-modal,
+.wrong-meme-modal {
   position: fixed;
   inset: 0;
   z-index: 40;
@@ -717,6 +718,11 @@ body.secret-mode #trainer-title {
   background: rgba(17, 24, 39, 0.46);
   display: grid;
   place-items: center;
+}
+
+.wrong-meme-modal {
+  z-index: 65;
+  background: rgba(17, 24, 39, 0.68);
 }
 
 .game-dialog,
@@ -730,6 +736,48 @@ body.secret-mode #trainer-title {
   border-radius: 8px;
   background: white;
   box-shadow: 0 22px 60px rgba(15, 23, 42, 0.26);
+}
+
+.wrong-meme-dialog {
+  position: relative;
+  width: min(760px, calc(100vw - 28px));
+  display: grid;
+  gap: 10px;
+}
+
+.wrong-meme-dialog img {
+  display: block;
+  width: 100%;
+  max-height: calc(100vh - 110px);
+  border: 4px solid white;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #111827;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+.wrong-meme-dialog p {
+  margin: 0;
+  color: white;
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.wrong-meme-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: white;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 28px;
+  line-height: 1;
+  z-index: 1;
 }
 
 .achievements-dialog {
@@ -1285,8 +1333,14 @@ body.secret-mode #trainer-title {
 
   .game-modal,
   .achievements-modal,
-  .stress-modal {
+  .stress-modal,
+  .wrong-meme-modal {
     padding: 10px;
+  }
+
+  .wrong-meme-close {
+    top: -10px;
+    right: -8px;
   }
 
   .game-dialog,

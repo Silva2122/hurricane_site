@@ -153,6 +153,14 @@
       </div>
     </div>
 
+    <div id="wrong-meme-modal" class="wrong-meme-modal" hidden>
+      <div class="wrong-meme-dialog" role="dialog" aria-modal="true" aria-labelledby="wrong-meme-title">
+        <button id="wrong-meme-close" class="wrong-meme-close" type="button" aria-label="Закрыть мем">×</button>
+        <img src="./assets/c9a51354e018364afd5ce17224226e01.jpg" alt="Бро, тебе надо тренироваться. А вот мне нет." />
+        <p id="wrong-meme-title">Неправильный ответ</p>
+      </div>
+    </div>
+
     <section class="music-player" aria-label="Фоновая музыка">
       <button id="music-toggle" class="music-toggle" type="button" aria-expanded="false" aria-controls="music-panel" title="Фоновая музыка">
         ♪
@@ -182,6 +190,10 @@
         <label class="effect-control" for="error-sound-toggle">
           <input id="error-sound-toggle" type="checkbox" checked />
           <span>Звук ошибки</span>
+        </label>
+        <label class="effect-control" for="error-meme-toggle">
+          <input id="error-meme-toggle" type="checkbox" checked />
+          <span>Мем ошибки</span>
         </label>
         <audio id="music-audio" class="music-audio" preload="none" loop></audio>
         <audio id="error-audio" class="music-audio" preload="auto" src="./tiazhelo-prorok-sanboi.mp3"></audio>
