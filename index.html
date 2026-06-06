@@ -61,6 +61,43 @@
       </aside>
     </main>
 
+    <section class="game-widget" aria-label="Мини-игра 2048">
+      <button id="game-toggle" class="game-toggle" type="button" aria-expanded="false" aria-controls="game-modal" title="2048">
+        2048
+      </button>
+    </section>
+
+    <div id="game-modal" class="game-modal" hidden>
+      <div class="game-dialog" role="dialog" aria-modal="true" aria-labelledby="game-title">
+        <div class="game-head">
+          <div>
+            <p class="eyebrow">Мини-игра</p>
+            <h2 id="game-title">2048</h2>
+          </div>
+          <button id="game-close" class="game-close" type="button" aria-label="Закрыть игру">×</button>
+        </div>
+        <div class="game-score-row">
+          <div class="game-score">
+            <span>Счет</span>
+            <strong id="game-score">0</strong>
+          </div>
+          <div class="game-score">
+            <span>Лучший</span>
+            <strong id="game-best">0</strong>
+          </div>
+          <button id="game-new" class="game-new" type="button">Новая</button>
+        </div>
+        <div id="game-status" class="game-status" aria-live="polite">Собери 2048</div>
+        <div id="game-board" class="game-board" role="application" aria-label="Поле 2048" tabindex="0"></div>
+        <div class="game-controls" aria-label="Управление 2048">
+          <button class="game-control game-control-up" type="button" data-game-move="up" aria-label="Вверх">↑</button>
+          <button type="button" data-game-move="left" aria-label="Влево">←</button>
+          <button type="button" data-game-move="down" aria-label="Вниз">↓</button>
+          <button type="button" data-game-move="right" aria-label="Вправо">→</button>
+        </div>
+      </div>
+    </div>
+
     <section class="music-player" aria-label="Фоновая музыка">
       <button id="music-toggle" class="music-toggle" type="button" aria-expanded="false" aria-controls="music-panel" title="Фоновая музыка">
         ♪

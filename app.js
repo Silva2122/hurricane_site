@@ -13,6 +13,12 @@
   let sequenceOrder = [];
   let matchingSelections = {};
   let sequenceDrag = null;
+  let gameBoard = Array(16).fill(0);
+  let gameScore = 0;
+  let gameBest = loadGameBest();
+  let gameWon = false;
+  let gameOver = false;
+  let gameTouch = null;
 
   const nodes = {
     answeredCount: document.getElementById("answered-count"),
@@ -43,6 +49,15 @@
     musicVolumeValue: document.getElementById("music-volume-value"),
     musicAudio: document.getElementById("music-audio"),
     musicTracks: [...document.querySelectorAll(".music-track")],
+    gameToggle: document.getElementById("game-toggle"),
+    gameModal: document.getElementById("game-modal"),
+    gameClose: document.getElementById("game-close"),
+    gameNew: document.getElementById("game-new"),
+    gameScore: document.getElementById("game-score"),
+    gameBest: document.getElementById("game-best"),
+    gameStatus: document.getElementById("game-status"),
+    gameBoard: document.getElementById("game-board"),
+    gameControls: [...document.querySelectorAll("[data-game-move]")],
   };
 
   function currentQuestion() {
@@ -755,6 +770,231 @@
     nodes.musicTracks.forEach((track) => track.classList.remove("active"));
   }
 
+  function openGame() {
+    nodes.gameModal.hidden = false;
+    nodes.gameToggle.classList.add("is-open");
+    nodes.gameToggle.setAttribute("aria-expanded", "true");
+    window.setTimeout(() => nodes.gameBoard.focus(), 0);
+  }
+
+  function closeGame() {
+    nodes.gameModal.hidden = true;
+    nodes.gameToggle.classList.remove("is-open");
+    nodes.gameToggle.setAttribute("aria-expanded", "false");
+    nodes.gameToggle.focus();
+  }
+
+  function startGame() {
+    gameBoard = Array(16).fill(0);
+    gameScore = 0;
+    gameWon = false;
+    gameOver = false;
+    addGameTile();
+    addGameTile();
+    renderGame();
+  }
+
+  function addGameTile() {
+    const emptyIndexes = gameBoard
+      .map((value, index) => (value === 0 ? index : -1))
+      .filter((index) => index !== -1);
+
+    if (!emptyIndexes.length) {
+      return;
+    }
+
+    const index = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+    gameBoard[index] = Math.random() < 0.9 ? 2 : 4;
+  }
+
+  function renderGame() {
+    nodes.gameScore.textContent = gameScore.toString();
+    nodes.gameBest.textContent = gameBest.toString();
+    nodes.gameBoard.innerHTML = "";
+
+    gameBoard.forEach((value) => {
+      const tile = document.createElement("div");
+      tile.className = "game-tile";
+      if (value) {
+        tile.dataset.value = value.toString();
+        tile.textContent = value.toString();
+      }
+      nodes.gameBoard.append(tile);
+    });
+
+    if (gameOver) {
+      nodes.gameStatus.textContent = "Ходов больше нет";
+    } else if (gameWon) {
+      nodes.gameStatus.textContent = "2048 собрано";
+    } else {
+      nodes.gameStatus.textContent = "Собери 2048";
+    }
+  }
+
+  function moveGame(direction) {
+    if (gameOver) {
+      return;
+    }
+
+    const before = gameBoard.join(",");
+    const nextBoard = Array(16).fill(0);
+    let gained = 0;
+
+    for (let index = 0; index < 4; index += 1) {
+      const line = getGameLine(direction, index);
+      const values = line.map((position) => gameBoard[position]);
+      const merged = mergeGameLine(values);
+      gained += merged.score;
+      line.forEach((position, lineIndex) => {
+        nextBoard[position] = merged.values[lineIndex];
+      });
+    }
+
+    if (before === nextBoard.join(",")) {
+      return;
+    }
+
+    gameBoard = nextBoard;
+    gameScore += gained;
+    if (gameScore > gameBest) {
+      gameBest = gameScore;
+      saveGameBest(gameBest);
+    }
+
+    addGameTile();
+    if (gameBoard.includes(2048)) {
+      gameWon = true;
+    }
+    gameOver = !canMoveGame();
+    renderGame();
+  }
+
+  function getGameLine(direction, index) {
+    const lines = {
+      left: [0, 1, 2, 3].map((column) => index * 4 + column),
+      right: [3, 2, 1, 0].map((column) => index * 4 + column),
+      up: [0, 1, 2, 3].map((row) => row * 4 + index),
+      down: [3, 2, 1, 0].map((row) => row * 4 + index),
+    };
+    return lines[direction] || lines.left;
+  }
+
+  function mergeGameLine(values) {
+    const compact = values.filter(Boolean);
+    const merged = [];
+    let score = 0;
+
+    for (let index = 0; index < compact.length; index += 1) {
+      if (compact[index] === compact[index + 1]) {
+        const value = compact[index] * 2;
+        merged.push(value);
+        score += value;
+        index += 1;
+      } else {
+        merged.push(compact[index]);
+      }
+    }
+
+    while (merged.length < 4) {
+      merged.push(0);
+    }
+
+    return { values: merged, score };
+  }
+
+  function canMoveGame() {
+    if (gameBoard.some((value) => value === 0)) {
+      return true;
+    }
+
+    return gameBoard.some((value, index) => {
+      const column = index % 4;
+      const row = Math.floor(index / 4);
+      const right = column < 3 && gameBoard[index + 1] === value;
+      const down = row < 3 && gameBoard[index + 4] === value;
+      return right || down;
+    });
+  }
+
+  function handleGameKey(event) {
+    if (nodes.gameModal.hidden) {
+      return;
+    }
+
+    const keys = {
+      ArrowUp: "up",
+      ArrowDown: "down",
+      ArrowLeft: "left",
+      ArrowRight: "right",
+      w: "up",
+      s: "down",
+      a: "left",
+      d: "right",
+      ц: "up",
+      ы: "down",
+      ф: "left",
+      в: "right",
+    };
+
+    if (event.key === "Escape") {
+      closeGame();
+      return;
+    }
+
+    const direction = keys[event.key];
+    if (!direction) {
+      return;
+    }
+
+    event.preventDefault();
+    moveGame(direction);
+  }
+
+  function beginGameTouch(event) {
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+    gameTouch = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+  }
+
+  function finishGameTouch(event) {
+    if (!gameTouch) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - gameTouch.x;
+    const dy = touch.clientY - gameTouch.y;
+    gameTouch = null;
+
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) {
+      return;
+    }
+
+    event.preventDefault();
+    moveGame(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : dy > 0 ? "down" : "up");
+  }
+
+  function loadGameBest() {
+    try {
+      return Number(window.localStorage.getItem("management-2048-best")) || 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function saveGameBest(value) {
+    try {
+      window.localStorage.setItem("management-2048-best", String(value));
+    } catch (error) {
+      // The game still works without saved scores.
+    }
+  }
+
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, "&amp;")
@@ -778,7 +1018,22 @@
   nodes.musicTracks.forEach((track) => {
     track.addEventListener("click", () => playMusic(track));
   });
+  nodes.gameToggle.addEventListener("click", openGame);
+  nodes.gameClose.addEventListener("click", closeGame);
+  nodes.gameNew.addEventListener("click", startGame);
+  nodes.gameModal.addEventListener("click", (event) => {
+    if (event.target === nodes.gameModal) {
+      closeGame();
+    }
+  });
+  nodes.gameBoard.addEventListener("touchstart", beginGameTouch, { passive: true });
+  nodes.gameBoard.addEventListener("touchend", finishGameTouch, { passive: false });
+  nodes.gameControls.forEach((button) => {
+    button.addEventListener("click", () => moveGame(button.dataset.gameMove));
+  });
+  window.addEventListener("keydown", handleGameKey);
 
   updateMusicVolume();
+  startGame();
   render();
 })();
