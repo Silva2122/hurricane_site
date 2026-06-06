@@ -1149,6 +1149,29 @@ body.secret-mode #trainer-title {
   text-align: right;
 }
 
+.effect-control {
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.effect-control input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
 .music-audio {
   display: none;
 }

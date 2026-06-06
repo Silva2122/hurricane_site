@@ -98,6 +98,7 @@
   let totalCorrect = loadNumber("management-total-correct");
   let titleClicks = 0;
   let secretMode = loadBoolean("management-secret-mode");
+  let errorSoundEnabled = !loadBoolean("management-error-sound-muted");
   let unlockedAchievements = loadUnlockedAchievements();
 
   const nodes = {
@@ -135,6 +136,8 @@
     musicVolume: document.getElementById("music-volume"),
     musicVolumeValue: document.getElementById("music-volume-value"),
     musicAudio: document.getElementById("music-audio"),
+    errorAudio: document.getElementById("error-audio"),
+    errorSoundToggle: document.getElementById("error-sound-toggle"),
     musicTracks: [...document.querySelectorAll(".music-track")],
     gameToggle: document.getElementById("game-toggle"),
     gameModal: document.getElementById("game-modal"),
@@ -762,6 +765,7 @@
       launchConfetti();
     } else {
       correctStreak = 0;
+      playErrorSound();
     }
     render();
   }
@@ -1137,6 +1141,28 @@
     nodes.musicVolumeValue.textContent = `${value}%`;
   }
 
+  function updateErrorSoundToggle() {
+    errorSoundEnabled = nodes.errorSoundToggle.checked;
+    saveBoolean("management-error-sound-muted", !errorSoundEnabled);
+  }
+
+  function syncErrorSoundToggle() {
+    nodes.errorSoundToggle.checked = errorSoundEnabled;
+  }
+
+  async function playErrorSound() {
+    if (!errorSoundEnabled) {
+      return;
+    }
+
+    nodes.errorAudio.currentTime = 0;
+    try {
+      await nodes.errorAudio.play();
+    } catch (error) {
+      // Browsers may block audio until a user gesture; answering is normally enough.
+    }
+  }
+
   async function playMusic(track) {
     const src = track.dataset.audioSrc;
     nodes.musicAudio.src = src;
@@ -1420,6 +1446,7 @@
   nodes.musicToggle.addEventListener("click", toggleMusicPanel);
   nodes.musicStop.addEventListener("click", stopMusic);
   nodes.musicVolume.addEventListener("input", updateMusicVolume);
+  nodes.errorSoundToggle.addEventListener("change", updateErrorSoundToggle);
   nodes.musicTracks.forEach((track) => {
     track.addEventListener("click", () => playMusic(track));
   });
@@ -1460,6 +1487,7 @@
   window.addEventListener("keydown", handleGameKey);
 
   updateMusicVolume();
+  syncErrorSoundToggle();
   startGame();
   renderAchievements();
   applySecretMode();
