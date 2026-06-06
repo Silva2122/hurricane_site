@@ -33,6 +33,13 @@ body {
   font-family: Inter, Arial, Helvetica, sans-serif;
 }
 
+body.secret-mode {
+  --bg: #f7f8ee;
+  --surface-soft: #eef4e8;
+  --accent: #dff1d7;
+  --accent-line: #85bf73;
+}
+
 button {
   font: inherit;
 }
@@ -125,6 +132,101 @@ h1 {
   background: white;
   color: var(--text);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.progress-strip {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.75fr);
+  gap: 12px;
+}
+
+.rank-card,
+.combo-card {
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fafbfb;
+}
+
+.rank-card {
+  display: grid;
+  gap: 3px;
+}
+
+.rank-card span,
+.combo-head span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.rank-card strong {
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.rank-card small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.combo-card {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.combo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.combo-head strong {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.combo-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #e2e7eb;
+  overflow: hidden;
+}
+
+.combo-bar span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green-line);
+  transition: width 180ms ease, background 180ms ease;
+}
+
+.combo-card.hot .combo-bar span {
+  background: #d8c158;
+}
+
+.combo-card.fire .combo-bar span {
+  background: var(--red-line);
+}
+
+.combo-card.fire {
+  border-color: var(--red-line);
+  background: #fff6f3;
+}
+
+body.secret-mode .trainer,
+body.secret-mode .navigator {
+  box-shadow: 0 18px 45px rgba(32, 122, 63, 0.12);
+}
+
+body.secret-mode #trainer-title {
+  text-shadow: 0 0 18px rgba(115, 201, 135, 0.45);
 }
 
 .question-meta {
@@ -1083,6 +1185,10 @@ h1 {
   .mode-button {
     flex: 1;
     min-width: 96px;
+  }
+
+  .progress-strip {
+    grid-template-columns: 1fr;
   }
 
   .question-meta {

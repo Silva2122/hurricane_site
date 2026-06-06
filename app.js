@@ -21,6 +21,14 @@
     "Преподавательский щит пробит.",
     "Десять из десяти. Это уже стиль.",
   ];
+  const rankDefinitions = [
+    { min: 0, title: "Первокурсник" },
+    { min: 5, title: "Староста" },
+    { min: 15, title: "Замдекана" },
+    { min: 30, title: "Магистр менеджмента" },
+    { min: 60, title: "Легенда зачётки" },
+    { min: 100, title: "Декан менеджмента" },
+  ];
   const achievementDefinitions = [
     {
       id: "first-correct",
@@ -58,6 +66,12 @@
       title: "2048 вместо учебы",
       description: "Открыть мини-игру 2048.",
     },
+    {
+      id: "secret-mode",
+      icon: "S",
+      title: "Зачётная легенда",
+      description: "Найти секретный режим тренажера.",
+    },
   ];
   const stressLabels = ["зачёт", "автомат", "Минцберг", "не списывал", "контроль", "5/5", "допущен"];
   const stressColors = ["#207a3f", "#1f2937", "#b42333", "#667085", "#8a6f2a"];
@@ -81,6 +95,9 @@
   let gameOver = false;
   let gameTouch = null;
   let correctStreak = 0;
+  let totalCorrect = loadNumber("management-total-correct");
+  let titleClicks = 0;
+  let secretMode = loadBoolean("management-secret-mode");
   let unlockedAchievements = loadUnlockedAchievements();
 
   const nodes = {
@@ -90,6 +107,7 @@
     questionMode: document.getElementById("question-mode"),
     questionImageWrap: document.getElementById("question-image-wrap"),
     questionImage: document.getElementById("question-image"),
+    trainerTitle: document.getElementById("trainer-title"),
     questionTitle: document.getElementById("question-title"),
     options: document.getElementById("options"),
     answerPanel: document.getElementById("answer-panel"),
@@ -98,6 +116,11 @@
     practiceModeButton: document.getElementById("practice-mode-button"),
     marathonModeButton: document.getElementById("marathon-mode-button"),
     bossModeButton: document.getElementById("boss-mode-button"),
+    rankTitle: document.getElementById("rank-title"),
+    rankProgress: document.getElementById("rank-progress"),
+    comboCard: document.getElementById("combo-card"),
+    comboCount: document.getElementById("combo-count"),
+    comboFill: document.getElementById("combo-fill"),
     checkButton: document.getElementById("check-button"),
     showAnswerButton: document.getElementById("show-answer-button"),
     nextButton: document.getElementById("next-button"),
@@ -195,6 +218,7 @@
     nodes.practiceModeButton.classList.toggle("active", mode === "practice");
     nodes.marathonModeButton.classList.toggle("active", mode === "marathon");
     nodes.bossModeButton.classList.toggle("active", mode === "boss");
+    renderProgress();
     nodes.answeredCount.textContent = answered.toString();
     nodes.totalCount.textContent = questions.length.toString();
     nodes.questionCounter.textContent = `Вопрос ${currentIndex + 1} из ${questions.length} · ${question.displayNumber}`;
@@ -723,6 +747,8 @@
     });
     if (correct) {
       correctStreak += 1;
+      totalCorrect += 1;
+      saveNumber("management-total-correct", totalCorrect);
       unlockAchievement("first-correct");
       if (correctStreak >= 5) {
         unlockAchievement("streak-5");
@@ -873,6 +899,49 @@
       .map((item) => item.question);
   }
 
+  function renderProgress() {
+    const rank = getCurrentRank();
+    const nextRank = rankDefinitions.find((item) => item.min > totalCorrect);
+    const comboProgress = Math.min(correctStreak, 10) * 10;
+
+    nodes.rankTitle.textContent = rank.title;
+    nodes.rankProgress.textContent = nextRank
+      ? `${totalCorrect} верных · до "${nextRank.title}" еще ${nextRank.min - totalCorrect}`
+      : `${totalCorrect} верных · максимальное звание`;
+    nodes.comboCount.textContent = `x${correctStreak}`;
+    nodes.comboFill.style.width = `${comboProgress}%`;
+    nodes.comboCard.classList.toggle("hot", correctStreak >= 5 && correctStreak < 10);
+    nodes.comboCard.classList.toggle("fire", correctStreak >= 10);
+  }
+
+  function getCurrentRank() {
+    return rankDefinitions.reduce((current, rank) => (totalCorrect >= rank.min ? rank : current), rankDefinitions[0]);
+  }
+
+  function handleTitleSecretClick() {
+    titleClicks += 1;
+    if (titleClicks < 7) {
+      return;
+    }
+
+    titleClicks = 0;
+    secretMode = !secretMode;
+    applySecretMode();
+    saveBoolean("management-secret-mode", secretMode);
+    const alreadyUnlocked = unlockedAchievements.has("secret-mode");
+    if (secretMode && !alreadyUnlocked) {
+      unlockAchievement("secret-mode");
+      return;
+    }
+    showAchievementToast({
+      title: secretMode ? "Секретный режим включен" : "Секретный режим выключен",
+    });
+  }
+
+  function applySecretMode() {
+    document.body.classList.toggle("secret-mode", secretMode);
+  }
+
   function buildAnswerText(question, phrase) {
     const answer = isChoice(question) ? `Правильный ответ: ${question.answerText}` : `Ответ: ${question.answerText}`;
     return `${phrase} ${answer}`;
@@ -1021,6 +1090,38 @@
       window.localStorage.setItem("management-achievements", JSON.stringify([...unlockedAchievements]));
     } catch (error) {
       // Achievements still work for the current session without storage.
+    }
+  }
+
+  function loadNumber(key) {
+    try {
+      return Number(window.localStorage.getItem(key)) || 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function saveNumber(key, value) {
+    try {
+      window.localStorage.setItem(key, String(value));
+    } catch (error) {
+      // Progress still works for the current session without storage.
+    }
+  }
+
+  function loadBoolean(key) {
+    try {
+      return window.localStorage.getItem(key) === "true";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function saveBoolean(key, value) {
+    try {
+      window.localStorage.setItem(key, String(value));
+    } catch (error) {
+      // Secret mode still works for the current session without storage.
     }
   }
 
@@ -1312,6 +1413,7 @@
   nodes.restartButton.addEventListener("click", restartCurrentRun);
   nodes.resetButton.addEventListener("click", reset);
   nodes.shuffleButton.addEventListener("click", shuffle);
+  nodes.trainerTitle.addEventListener("click", handleTitleSecretClick);
   nodes.practiceModeButton.addEventListener("click", () => setMode("practice"));
   nodes.marathonModeButton.addEventListener("click", () => setMode("marathon"));
   nodes.bossModeButton.addEventListener("click", () => setMode("boss"));
@@ -1360,5 +1462,6 @@
   updateMusicVolume();
   startGame();
   renderAchievements();
+  applySecretMode();
   render();
 })();

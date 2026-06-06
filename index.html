@@ -12,7 +12,7 @@
         <div class="topbar">
           <div>
             <p class="eyebrow">Менеджмент</p>
-            <h1>Тренажер экзаменационных вопросов</h1>
+            <h1 id="trainer-title" title="Тренажер экзаменационных вопросов">Тренажер экзаменационных вопросов</h1>
           </div>
           <div class="score" aria-live="polite">
             <span id="answered-count">0</span>/<span id="total-count">0</span>
@@ -23,6 +23,23 @@
           <button id="practice-mode-button" class="mode-button active" type="button">Обычный</button>
           <button id="marathon-mode-button" class="mode-button" type="button">Марафон</button>
           <button id="boss-mode-button" class="mode-button" type="button">Босс-файт</button>
+        </div>
+
+        <div class="progress-strip" aria-label="Игровой прогресс">
+          <div class="rank-card">
+            <span>Звание</span>
+            <strong id="rank-title">Первокурсник</strong>
+            <small id="rank-progress">0 верных</small>
+          </div>
+          <div id="combo-card" class="combo-card">
+            <div class="combo-head">
+              <span>Комбо</span>
+              <strong id="combo-count">x0</strong>
+            </div>
+            <div class="combo-bar" aria-hidden="true">
+              <span id="combo-fill"></span>
+            </div>
+          </div>
         </div>
 
         <div class="question-meta">
