@@ -62,11 +62,48 @@
       </aside>
     </main>
 
-    <section class="game-widget" aria-label="Мини-игра 2048">
+    <section class="fun-dock" aria-label="Развлекательные функции">
+      <button id="achievements-toggle" class="dock-toggle achievements-toggle" type="button" aria-expanded="false" aria-controls="achievements-modal" title="Ачивки">
+        ★
+      </button>
+      <button id="stress-toggle" class="dock-toggle stress-toggle" type="button" aria-expanded="false" aria-controls="stress-modal" title="Антистресс">
+        Зачёт
+      </button>
       <button id="game-toggle" class="game-toggle" type="button" aria-expanded="false" aria-controls="game-modal" title="2048">
         2048
       </button>
     </section>
+
+    <div id="achievement-toasts" class="achievement-toasts" aria-live="polite"></div>
+
+    <div id="achievements-modal" class="achievements-modal" hidden>
+      <div class="achievements-dialog" role="dialog" aria-modal="true" aria-labelledby="achievements-title">
+        <div class="game-head">
+          <div>
+            <p class="eyebrow">Прогресс</p>
+            <h2 id="achievements-title">Ачивки</h2>
+          </div>
+          <button id="achievements-close" class="game-close" type="button" aria-label="Закрыть ачивки">×</button>
+        </div>
+        <div id="achievements-list" class="achievements-list"></div>
+      </div>
+    </div>
+
+    <div id="stress-modal" class="stress-modal" hidden>
+      <div class="stress-dialog" role="dialog" aria-modal="true" aria-labelledby="stress-title">
+        <div class="game-head">
+          <div>
+            <p class="eyebrow">Антистресс</p>
+            <h2 id="stress-title">Штампы зачёта</h2>
+          </div>
+          <button id="stress-close" class="game-close" type="button" aria-label="Закрыть антистресс">×</button>
+        </div>
+        <div id="stress-pad" class="stress-pad" role="button" tabindex="0" aria-label="Поставить штамп">
+          <span class="stress-hint">Тапай или кликай по полю</span>
+        </div>
+        <button id="stress-clear" class="secondary stress-clear" type="button">Очистить</button>
+      </div>
+    </div>
 
     <div id="game-modal" class="game-modal" hidden>
       <div class="game-dialog" role="dialog" aria-modal="true" aria-labelledby="game-title">

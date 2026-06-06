@@ -21,6 +21,46 @@
     "Преподавательский щит пробит.",
     "Десять из десяти. Это уже стиль.",
   ];
+  const achievementDefinitions = [
+    {
+      id: "first-correct",
+      icon: "1",
+      title: "Первый правильный",
+      description: "Ответить верно хотя бы один раз.",
+    },
+    {
+      id: "streak-5",
+      icon: "5",
+      title: "Пять подряд",
+      description: "Собрать серию из 5 правильных ответов.",
+    },
+    {
+      id: "streak-10",
+      icon: "10",
+      title: "Десять подряд",
+      description: "Собрать серию из 10 правильных ответов.",
+    },
+    {
+      id: "boss-win",
+      icon: "B",
+      title: "Босс повержен",
+      description: "Пройти босс-файт без ошибок.",
+    },
+    {
+      id: "stress",
+      icon: "Z",
+      title: "Антистресс активирован",
+      description: "Поставить первый штамп зачета.",
+    },
+    {
+      id: "game-2048",
+      icon: "2K",
+      title: "2048 вместо учебы",
+      description: "Открыть мини-игру 2048.",
+    },
+  ];
+  const stressLabels = ["зачёт", "автомат", "Минцберг", "не списывал", "контроль", "5/5", "допущен"];
+  const stressColors = ["#207a3f", "#1f2937", "#b42333", "#667085", "#8a6f2a"];
 
   let questions = [...originalQuestions];
   let currentIndex = 0;
@@ -40,6 +80,8 @@
   let gameWon = false;
   let gameOver = false;
   let gameTouch = null;
+  let correctStreak = 0;
+  let unlockedAchievements = loadUnlockedAchievements();
 
   const nodes = {
     answeredCount: document.getElementById("answered-count"),
@@ -80,6 +122,16 @@
     gameStatus: document.getElementById("game-status"),
     gameBoard: document.getElementById("game-board"),
     gameControls: [...document.querySelectorAll("[data-game-move]")],
+    achievementsToggle: document.getElementById("achievements-toggle"),
+    achievementsModal: document.getElementById("achievements-modal"),
+    achievementsClose: document.getElementById("achievements-close"),
+    achievementsList: document.getElementById("achievements-list"),
+    achievementToasts: document.getElementById("achievement-toasts"),
+    stressToggle: document.getElementById("stress-toggle"),
+    stressModal: document.getElementById("stress-modal"),
+    stressClose: document.getElementById("stress-close"),
+    stressPad: document.getElementById("stress-pad"),
+    stressClear: document.getElementById("stress-clear"),
   };
 
   function currentQuestion() {
@@ -670,7 +722,20 @@
       phrase: getResultPhrase(correct),
     });
     if (correct) {
+      correctStreak += 1;
+      unlockAchievement("first-correct");
+      if (correctStreak >= 5) {
+        unlockAchievement("streak-5");
+      }
+      if (correctStreak >= 10) {
+        unlockAchievement("streak-10");
+      }
+      if (bossComplete) {
+        unlockAchievement("boss-win");
+      }
       launchConfetti();
+    } else {
+      correctStreak = 0;
     }
     render();
   }
@@ -684,6 +749,7 @@
       phrase: getResultPhrase(false),
     });
     marathonFailed = mode === "marathon" || mode === "boss";
+    correctStreak = 0;
     render();
   }
 
@@ -735,6 +801,7 @@
     resetInteraction();
     marathonFailed = false;
     bossComplete = false;
+    correctStreak = 0;
     results = new Map();
     currentIndex = 0;
     render();
@@ -760,6 +827,7 @@
     resetInteraction();
     marathonFailed = false;
     bossComplete = false;
+    correctStreak = 0;
     results = new Map();
     currentIndex = 0;
     render();
@@ -770,6 +838,7 @@
     resetInteraction();
     marathonFailed = false;
     bossComplete = false;
+    correctStreak = 0;
     results = new Map();
     currentIndex = 0;
     render();
@@ -792,6 +861,7 @@
     resetInteraction();
     marathonFailed = false;
     bossComplete = false;
+    correctStreak = 0;
     results = new Map();
     render();
   }
@@ -837,6 +907,123 @@
     }
   }
 
+  function unlockAchievement(id) {
+    if (unlockedAchievements.has(id)) {
+      return;
+    }
+
+    const achievement = achievementDefinitions.find((item) => item.id === id);
+    if (!achievement) {
+      return;
+    }
+
+    unlockedAchievements.add(id);
+    saveUnlockedAchievements();
+    renderAchievements();
+    showAchievementToast(achievement);
+  }
+
+  function renderAchievements() {
+    nodes.achievementsList.innerHTML = "";
+
+    achievementDefinitions.forEach((achievement) => {
+      const unlocked = unlockedAchievements.has(achievement.id);
+      const card = document.createElement("div");
+      card.className = "achievement-card";
+      card.classList.toggle("unlocked", unlocked);
+      card.innerHTML = `
+        <div class="achievement-icon">${escapeHtml(unlocked ? achievement.icon : "?")}</div>
+        <div class="achievement-copy">
+          <strong>${escapeHtml(achievement.title)}</strong>
+          <span>${escapeHtml(unlocked ? achievement.description : "Пока закрыто")}</span>
+        </div>
+      `;
+      nodes.achievementsList.append(card);
+    });
+  }
+
+  function showAchievementToast(achievement) {
+    const toast = document.createElement("div");
+    toast.className = "achievement-toast";
+    toast.innerHTML = `
+      <strong>Ачивка получена</strong>
+      <span>${escapeHtml(achievement.title)}</span>
+    `;
+    nodes.achievementToasts.append(toast);
+    window.setTimeout(() => toast.remove(), 3400);
+  }
+
+  function openAchievements() {
+    renderAchievements();
+    nodes.achievementsModal.hidden = false;
+    nodes.achievementsToggle.classList.add("is-open");
+    nodes.achievementsToggle.setAttribute("aria-expanded", "true");
+  }
+
+  function closeAchievements() {
+    nodes.achievementsModal.hidden = true;
+    nodes.achievementsToggle.classList.remove("is-open");
+    nodes.achievementsToggle.setAttribute("aria-expanded", "false");
+    nodes.achievementsToggle.focus();
+  }
+
+  function openStress() {
+    nodes.stressModal.hidden = false;
+    nodes.stressToggle.classList.add("is-open");
+    nodes.stressToggle.setAttribute("aria-expanded", "true");
+    nodes.stressPad.focus();
+  }
+
+  function closeStress() {
+    nodes.stressModal.hidden = true;
+    nodes.stressToggle.classList.remove("is-open");
+    nodes.stressToggle.setAttribute("aria-expanded", "false");
+    nodes.stressToggle.focus();
+  }
+
+  function placeStressStamp(event) {
+    event.preventDefault();
+    const rect = nodes.stressPad.getBoundingClientRect();
+    const clientX = event.clientX || rect.left + rect.width / 2;
+    const clientY = event.clientY || rect.top + rect.height / 2;
+    const stamp = document.createElement("span");
+    stamp.className = "stress-stamp";
+    stamp.textContent = getRandomPhrase(stressLabels);
+    stamp.style.setProperty("--stamp-x", `${clientX - rect.left}px`);
+    stamp.style.setProperty("--stamp-y", `${clientY - rect.top}px`);
+    stamp.style.setProperty("--stamp-rotate", `${Math.random() * 28 - 14}deg`);
+    stamp.style.setProperty("--stamp-color", getRandomPhrase(stressColors));
+    nodes.stressPad.append(stamp);
+    nodes.stressPad.classList.add("has-stamps");
+    unlockAchievement("stress");
+
+    const stamps = nodes.stressPad.querySelectorAll(".stress-stamp");
+    if (stamps.length > 26) {
+      stamps[0].remove();
+    }
+  }
+
+  function clearStressStamps() {
+    nodes.stressPad.querySelectorAll(".stress-stamp").forEach((stamp) => stamp.remove());
+    nodes.stressPad.classList.remove("has-stamps");
+  }
+
+  function loadUnlockedAchievements() {
+    try {
+      return new Set(JSON.parse(window.localStorage.getItem("management-achievements") || "[]"));
+    } catch (error) {
+      return new Set();
+    }
+  }
+
+  function saveUnlockedAchievements() {
+    try {
+      window.localStorage.setItem("management-achievements", JSON.stringify([...unlockedAchievements]));
+    } catch (error) {
+      // Achievements still work for the current session without storage.
+    }
+  }
+
   function toggleMusicPanel() {
     const open = nodes.musicPanel.hidden;
     nodes.musicPanel.hidden = !open;
@@ -877,6 +1064,7 @@
     nodes.gameModal.hidden = false;
     nodes.gameToggle.classList.add("is-open");
     nodes.gameToggle.setAttribute("aria-expanded", "true");
+    unlockAchievement("game-2048");
     window.setTimeout(() => nodes.gameBoard.focus(), 0);
   }
 
@@ -1020,6 +1208,17 @@
   }
 
   function handleGameKey(event) {
+    if (event.key === "Escape") {
+      if (!nodes.achievementsModal.hidden) {
+        closeAchievements();
+        return;
+      }
+      if (!nodes.stressModal.hidden) {
+        closeStress();
+        return;
+      }
+    }
+
     if (nodes.gameModal.hidden) {
       return;
     }
@@ -1135,9 +1334,31 @@
   nodes.gameControls.forEach((button) => {
     button.addEventListener("click", () => moveGame(button.dataset.gameMove));
   });
+  nodes.achievementsToggle.addEventListener("click", openAchievements);
+  nodes.achievementsClose.addEventListener("click", closeAchievements);
+  nodes.achievementsModal.addEventListener("click", (event) => {
+    if (event.target === nodes.achievementsModal) {
+      closeAchievements();
+    }
+  });
+  nodes.stressToggle.addEventListener("click", openStress);
+  nodes.stressClose.addEventListener("click", closeStress);
+  nodes.stressModal.addEventListener("click", (event) => {
+    if (event.target === nodes.stressModal) {
+      closeStress();
+    }
+  });
+  nodes.stressPad.addEventListener("pointerdown", placeStressStamp);
+  nodes.stressPad.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      placeStressStamp(event);
+    }
+  });
+  nodes.stressClear.addEventListener("click", clearStressStamps);
   window.addEventListener("keydown", handleGameKey);
 
   updateMusicVolume();
   startGame();
+  renderAchievements();
   render();
 })();

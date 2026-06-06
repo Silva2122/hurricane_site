@@ -515,13 +515,16 @@ h1 {
   }
 }
 
-.game-widget {
+.fun-dock {
   position: fixed;
   left: 22px;
   bottom: 22px;
   z-index: 20;
+  display: grid;
+  gap: 10px;
 }
 
+.dock-toggle,
 .game-toggle {
   width: 64px;
   height: 58px;
@@ -537,12 +540,74 @@ h1 {
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
 }
 
+.achievements-toggle {
+  background: #ffffff;
+  color: #111827;
+}
+
+.stress-toggle {
+  font-size: 12px;
+  line-height: 1.05;
+}
+
 .game-toggle.is-open {
   background: var(--green);
   border-color: var(--green);
 }
 
-.game-modal {
+.dock-toggle.is-open,
+.game-toggle.is-open {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+
+.achievement-toasts {
+  position: fixed;
+  right: 22px;
+  top: 22px;
+  z-index: 70;
+  width: min(320px, calc(100vw - 32px));
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.achievement-toast {
+  padding: 12px 14px;
+  border: 1px solid var(--green-line);
+  border-radius: 8px;
+  background: white;
+  box-shadow: var(--shadow);
+  animation: toast-in 260ms ease-out both;
+}
+
+.achievement-toast strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.achievement-toast span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-modal,
+.achievements-modal,
+.stress-modal {
   position: fixed;
   inset: 0;
   z-index: 40;
@@ -552,7 +617,9 @@ h1 {
   place-items: center;
 }
 
-.game-dialog {
+.game-dialog,
+.achievements-dialog,
+.stress-dialog {
   width: min(430px, 100%);
   max-height: calc(100vh - 44px);
   overflow: auto;
@@ -561,6 +628,10 @@ h1 {
   border-radius: 8px;
   background: white;
   box-shadow: 0 22px 60px rgba(15, 23, 42, 0.26);
+}
+
+.achievements-dialog {
+  width: min(520px, 100%);
 }
 
 .game-head,
@@ -579,6 +650,113 @@ h1 {
   margin: 0;
   font-size: 28px;
   line-height: 1;
+}
+
+.achievements-list {
+  display: grid;
+  gap: 10px;
+}
+
+.achievement-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.achievement-card.unlocked {
+  border-color: var(--green-line);
+  background: var(--green-bg);
+}
+
+.achievement-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: white;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+}
+
+.achievement-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.achievement-copy strong {
+  line-height: 1.2;
+}
+
+.achievement-copy span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.stress-dialog {
+  width: min(560px, 100%);
+}
+
+.stress-pad {
+  position: relative;
+  min-height: 360px;
+  border: 1px dashed #aeb7bf;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(115, 201, 135, 0.12), transparent 36%),
+    #fafbfb;
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.stress-hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.stress-pad.has-stamps .stress-hint {
+  opacity: 0.18;
+}
+
+.stress-stamp {
+  position: absolute;
+  left: var(--stamp-x);
+  top: var(--stamp-y);
+  padding: 7px 10px;
+  border: 2px solid currentColor;
+  border-radius: 8px;
+  color: var(--stamp-color);
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 15px;
+  font-weight: 900;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%) rotate(var(--stamp-rotate)) scale(0.9);
+  animation: stamp-pop 180ms ease-out forwards;
+  user-select: none;
+  pointer-events: none;
+}
+
+@keyframes stamp-pop {
+  to {
+    transform: translate(-50%, -50%) rotate(var(--stamp-rotate)) scale(1);
+  }
+}
+
+.stress-clear {
+  width: 100%;
+  margin-top: 12px;
 }
 
 .game-close {
@@ -946,9 +1124,12 @@ h1 {
     bottom: 14px;
   }
 
-  .game-widget {
+  .fun-dock {
     left: 14px;
     bottom: 14px;
+    gap: 8px;
+    grid-auto-flow: column;
+    grid-auto-columns: 58px;
   }
 
   .music-toggle {
@@ -956,18 +1137,37 @@ h1 {
     height: 54px;
   }
 
+  .dock-toggle,
   .game-toggle {
     width: 58px;
     height: 54px;
     font-size: 14px;
   }
 
-  .game-modal {
+  .stress-toggle {
+    font-size: 11px;
+  }
+
+  .achievement-toasts {
+    top: 12px;
+    right: 10px;
+    width: min(300px, calc(100vw - 20px));
+  }
+
+  .game-modal,
+  .achievements-modal,
+  .stress-modal {
     padding: 10px;
   }
 
-  .game-dialog {
+  .game-dialog,
+  .achievements-dialog,
+  .stress-dialog {
     padding: 14px;
+  }
+
+  .stress-pad {
+    min-height: 300px;
   }
 
   .game-score-row {
